@@ -1514,10 +1514,12 @@ static void process_shell_keyboard(void)
         if (length) {
             --length;
             fputs("\b \b", stdout);
+            fflush(stdout);
         }
     } else if (ascii >= 32 && length + 1 < sizeof(command)) {
         command[length++] = (char)ascii;
         putchar(ascii);
+        fflush(stdout);
     }
 }
 
