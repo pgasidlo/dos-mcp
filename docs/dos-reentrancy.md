@@ -19,7 +19,12 @@ Implemented in `dmpacket_rx.asm`:
 1. allocation phase returns the fixed 1,518-byte buffer in `ES:DI`;
 2. an already-ready or oversized frame receives a null buffer and is dropped;
 3. completion phase records only `CX` and a ready byte;
-4. the handler returns with `IRET`.
+4. the handler returns with `RETF`.
+
+The packet-driver specification calls the receiver with a FAR CALL. Crynwr
+drivers push FLAGS first and tolerate `IRET`, but some vendor drivers (3Com
+`3C90XPD.COM` v5.2.6) use a plain FAR CALL; `IRET` would pop an extra word
+as FLAGS and corrupt the interrupted stack. `RETF` is correct for both.
 
 Loss is expected and recovered through modern-host request retries.
 
