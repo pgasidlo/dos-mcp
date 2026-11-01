@@ -47,7 +47,7 @@ i.e. after the BIOS has acknowledged IRQ0. On every tick it:
 - saves all general/segment registers and loads resident DGROUP;
 - if a worker is already active, counts a busy skip and returns;
 - saves the interrupted `SS:SP` and switches atomically to the private
-  32 KiB resident stack;
+  4 KiB resident stack;
 - sets direction forward and enables interrupts;
 - calls one bounded non-DOS C worker step;
 - disables interrupts, restores the exact original stack, clears active state.
@@ -63,10 +63,12 @@ worker. The `INT 08h` and `INT 28h` entries share one active flag. Packet IRQs
 may fill the single receive buffer while the worker runs; an already-ready
 frame is dropped.
 
-The current build measures a 32 KiB private stack and retains the exact
-linker-derived PSP extent (about 74 KiB in the DOSBox-X build). The stack is
-guarded and its high-water mark is reported by the resident query; a smaller
-capacity will be selected after the full workload is measured.
+The private stack is 4 KiB. On a physical Pentium (MS-DOS 6.22, EMM386,
+SMARTDRV, 3C90XPD.COM) the high-water mark stayed at 248-322 bytes across
+status, text and VGA 13h capture, key injection and file transfers, so the
+former 32 KiB stack was reduced and the exact linker-derived PSP extent shrinks
+by 28 KiB. The stack is guarded and its high-water mark is reported by the
+resident query.
 
 ### `INT 28h` DOS-idle entry
 
@@ -166,7 +168,8 @@ RA-TSR. It is not installed or exposed as a product endpoint.
 
 ## Still requiring hardware verification
 
-- private-stack high-water mark and retained paragraph count;
+- private-stack high-water mark on 8088/286-class machines and with other
+  packet drivers (one Pentium with 3C90XPD.COM measured 248-322 bytes);
 - worst-case packet decode and 256-byte encode duration at 4.77 MHz;
 - timer jitter during text/file/graphics operations;
 - DOS version/critical-error behavior;
