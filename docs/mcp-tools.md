@@ -110,7 +110,15 @@ ENTER ESC TAB BACKSPACE
 UP DOWN RIGHT LEFT HOME END DELETE PAGE_UP PAGE_DOWN
 F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12
 CTRL_C CTRL_D
+ALT_A … ALT_Z  ALT_0 … ALT_9  ALT_F1 … ALT_F12
+SHIFT_F1 … SHIFT_F12  CTRL_F1 … CTRL_F12  CTRL_A … CTRL_Z
 ```
+
+On DOS targets the modifier keys are queued as enhanced-keyboard BIOS words:
+Alt and Shift/Ctrl/Alt+F-keys carry ASCII 0 with the extended scan code
+(e.g. `ALT_X` = 2D00h, `ALT_F1` = 6800h), and `CTRL_A`…`CTRL_Z` carry the
+letter's scan code with ASCII 01h…1Ah. The Linux backend sends ESC-prefixed
+Alt, control bytes, and xterm modified function-key sequences.
 
 Result reports accepted text bytes, named keys, and generation. Acceptance is
 queue insertion, not proof of application behavior. Capture before and after.

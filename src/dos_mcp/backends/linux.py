@@ -66,6 +66,31 @@ KEY_SEQUENCES = {
 }
 
 
+def _modifier_key_sequences() -> dict[str, bytes]:
+    """Alt (ESC prefix), Ctrl (control bytes) and xterm modified F-keys."""
+    sequences: dict[str, bytes] = {}
+    for offset in range(26):
+        lower = chr(ord("a") + offset)
+        upper = lower.upper()
+        sequences[f"ALT_{upper}"] = b"\x1b" + lower.encode()
+        sequences[f"CTRL_{upper}"] = bytes((offset + 1,))
+    for digit in "0123456789":
+        sequences[f"ALT_{digit}"] = b"\x1b" + digit.encode()
+    finals = {1: b"P", 2: b"Q", 3: b"R", 4: b"S"}
+    codes = {5: 15, 6: 17, 7: 18, 8: 19, 9: 20, 10: 21, 11: 23, 12: 24}
+    for prefix, modifier in (("SHIFT", 2), ("ALT", 3), ("CTRL", 5)):
+        for number in range(1, 13):
+            if number in finals:
+                sequence = b"\x1b[1;%d" % modifier + finals[number]
+            else:
+                sequence = b"\x1b[%d;%d~" % (codes[number], modifier)
+            sequences[f"{prefix}_F{number}"] = sequence
+    return sequences
+
+
+KEY_SEQUENCES.update(_modifier_key_sequences())
+
+
 class LinuxTerminalBackend:
     """Expose a Linux interactive shell as a bounded text-console target."""
 

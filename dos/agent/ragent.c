@@ -274,6 +274,13 @@ static void fill_text_capture_fragment(
 static dm_u16 inject_keys(const dm_u8 *payload, dm_u16 length, dm_u8 *output);
 static int bios_queue_word(dm_u16 word);
 static dm_u8 ascii_scan(dm_u8 value);
+/* Named-key codes beyond the original 1..27 table (wire protocol). */
+#define KEY_ALT_A    28
+#define KEY_ALT_0    54
+#define KEY_ALT_F1   64
+#define KEY_SHIFT_F1 76
+#define KEY_CTRL_F1  88
+#define KEY_CTRL_A   100
 static dm_u16 named_key_word(dm_u8 key);
 #ifndef RA_TSR
 static void process_shell_keyboard(void);
@@ -1499,9 +1506,37 @@ static dm_u16 named_key_word(dm_u8 key)
         0x4100, 0x4200, 0x4300, 0x4400, 0x8500, 0x8600,
         0x2E03, 0x2004
     };
-    if (key >= sizeof(values) / sizeof(values[0]))
-        return 0;
-    return values[key];
+    /* Extended scan codes (ASCII 0) for Alt+0..9 and Alt/Shift/Ctrl+F1..F12,
+     * as stored by an enhanced-keyboard BIOS in the 40:1E queue. */
+    static const dm_u8 alt_digit[10] = {
+        0x81, 0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F, 0x80
+    };
+    static const dm_u8 alt_function[12] = {
+        0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x8B, 0x8C
+    };
+    static const dm_u8 shift_function[12] = {
+        0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x87, 0x88
+    };
+    static const dm_u8 ctrl_function[12] = {
+        0x5E, 0x5F, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x89, 0x8A
+    };
+
+    if (key < sizeof(values) / sizeof(values[0]))
+        return values[key];
+    if (key >= KEY_ALT_A && key < KEY_ALT_A + 26)
+        return (dm_u16)ascii_scan((dm_u8)('a' + key - KEY_ALT_A)) << 8;
+    if (key >= KEY_ALT_0 && key < KEY_ALT_0 + 10)
+        return (dm_u16)alt_digit[key - KEY_ALT_0] << 8;
+    if (key >= KEY_ALT_F1 && key < KEY_ALT_F1 + 12)
+        return (dm_u16)alt_function[key - KEY_ALT_F1] << 8;
+    if (key >= KEY_SHIFT_F1 && key < KEY_SHIFT_F1 + 12)
+        return (dm_u16)shift_function[key - KEY_SHIFT_F1] << 8;
+    if (key >= KEY_CTRL_F1 && key < KEY_CTRL_F1 + 12)
+        return (dm_u16)ctrl_function[key - KEY_CTRL_F1] << 8;
+    if (key >= KEY_CTRL_A && key < KEY_CTRL_A + 26)
+        return ((dm_u16)ascii_scan((dm_u8)('a' + key - KEY_CTRL_A)) << 8)
+            | (dm_u16)(key - KEY_CTRL_A + 1);
+    return 0;
 }
 
 #ifndef RA_TSR

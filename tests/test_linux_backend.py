@@ -108,3 +108,17 @@ def test_linux_backend_file_paths_cannot_escape_root(tmp_path: Path) -> None:
             backend.upload_file(path="/tmp/outside", data=b"x", overwrite=False)
     finally:
         backend.close()
+
+
+def test_linux_backend_maps_modifier_keys() -> None:
+    from dos_mcp.backends.linux import KEY_SEQUENCES
+    from dos_mcp.protocol.constants import KeyCode
+
+    assert KEY_SEQUENCES["ALT_X"] == b"\x1bx"
+    assert KEY_SEQUENCES["ALT_0"] == b"\x1b0"
+    assert KEY_SEQUENCES["CTRL_A"] == b"\x01"
+    assert KEY_SEQUENCES["CTRL_Z"] == b"\x1a"
+    assert KEY_SEQUENCES["SHIFT_F1"] == b"\x1b[1;2P"
+    assert KEY_SEQUENCES["ALT_F4"] == b"\x1b[1;3S"
+    assert KEY_SEQUENCES["CTRL_F12"] == b"\x1b[24;5~"
+    assert {key.name for key in KeyCode} <= set(KEY_SEQUENCES)
